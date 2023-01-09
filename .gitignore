@@ -1,0 +1,12 @@
+.DS_Store
+*.icloud
+*.pyc
+
+weibospider/__pycache__
+weibospider/spiders/__pycache__
+
+
+# dump.rdb
+# output/picture
+# output/*.json
+# output/*.jsonl

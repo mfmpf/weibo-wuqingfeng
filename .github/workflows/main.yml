@@ -1,0 +1,76 @@
+name: Collect tweets on weibo
+
+# oh,my dear son!
+env:
+  WEIBO_USER: 1822796164
+  OWNER_REPO: ${{ github.repository }}
+  MAX_PAGE: 1
+ 
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+  schedule:
+    - cron: '0 0 ? * 1'
+ 
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout
+      uses: actions/checkout@main
+      
+    - name: Install & Run Redis
+      run: |
+        sudo apt-get install -y redis
+        redis-server --port 29384 &
+
+    - name: Set up Python
+      uses: actions/setup-python@v1
+      with:
+        python-version: 3.8
+
+    - name: Install requirements
+      run: pip install -r requirements.txt
+    
+    - name: Download tweets & Download pictures & Store tweets
+      run: |
+        cd weibospider
+        python run_spider.py tweet
+        python run_spider.py user
+        python convert.py
+        cd ..
+
+    - name: Push redis database file to main branch
+      # uses: actions-x/commit@v6
+      # with:
+      #   email: github-actions@noreply.github.com
+      #   name: github-actions
+      #   message: 'update database'
+      #   branch: main
+      #   files: dump.rdb
+      #   token: ${{ secrets.GITHUB_TOKEN }}
+      #   force: true
+      run: |
+        git config user.name github-actions
+        git config user.email github-actions@github.com
+        git add dump.rdb
+        git commit -m "update database"
+        git push
+
+    - name: Checkout output branch
+      uses: actions/checkout@main
+      with:
+        ref: output
+        path: branch_output
+
+    - name: Update output branch
+      run: |
+        cp -r output/ branch_output/
+        cd branch_output
+        git config user.name github-actions
+        git config user.email github-actions@github.com
+        git add .
+        git commit -m "update tweets"
+        git push

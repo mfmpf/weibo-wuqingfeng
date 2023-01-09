@@ -1,0 +1,3 @@
+Scrapy
+python_dateutil
+redis
